@@ -1,0 +1,7 @@
+{
+  "log_file_path": "./logs/app.log",
+  "min_level": "info",
+  "auto_flush": true,
+  "append": true,
+  "daily_rotation": true
+}
