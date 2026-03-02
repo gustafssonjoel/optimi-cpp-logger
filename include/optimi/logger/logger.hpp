@@ -197,8 +197,17 @@ private:
 
     mutable std::mutex mutex_;
     LoggerConfig config_;
+    std::string current_date_stamp_;
+    std::string active_log_path_;
     std::ofstream stream_;
     std::atomic<bool> initialized_;
 };
+
+#define OPTIMI_LOG_TRACE(message) ::optimi::logger::Logger::instance().trace((message))
+#define OPTIMI_LOG_DEBUG(message) ::optimi::logger::Logger::instance().debug((message))
+#define OPTIMI_LOG_INFO(message)  ::optimi::logger::Logger::instance().info((message))
+#define OPTIMI_LOG_WARN(message)  ::optimi::logger::Logger::instance().warn((message))
+#define OPTIMI_LOG_ERROR(message) ::optimi::logger::Logger::instance().error((message))
+#define OPTIMI_LOG_FATAL(message) ::optimi::logger::Logger::instance().fatal((message))
 
 } // namespace optimi::logger
