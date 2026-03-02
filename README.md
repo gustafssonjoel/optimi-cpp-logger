@@ -61,3 +61,7 @@ logger.fatal("Unrecoverable startup error");
 ```
 
 These methods automatically capture source file, line, and function for each call site.
+
+## Third-Party Licenses
+
+External dependency license information is documented in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
