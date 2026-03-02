@@ -48,6 +48,18 @@ struct LoggerConfig {
 };
 
 /**
+ * @brief Load logger configuration from a JSON file.
+ * @param json_path Path to a JSON configuration file.
+ * @param out_config Parsed configuration on success.
+ * @param error_message Detailed error on failure.
+ * @return true on success, false on parse/read/validation failure.
+ */
+bool load_config_from_json_file(
+    const std::string& json_path,
+    LoggerConfig& out_config,
+    std::string& error_message);
+
+/**
  * @brief Thread-safe singleton logger.
  */
 class Logger {
@@ -69,6 +81,14 @@ public:
      * @return true on success, false if initialization fails.
      */
     bool init(const LoggerConfig& config);
+
+    /**
+     * @brief Load configuration from JSON and initialize logger.
+     * @param json_path Path to JSON configuration file.
+     * @param error_message Detailed error on failure.
+     * @return true on success, false on read/parse/validation/init failure.
+     */
+    bool init_from_json_file(const std::string& json_path, std::string& error_message);
 
     /**
      * @brief Flush and close logger resources.
