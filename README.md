@@ -46,3 +46,18 @@ The logger uses `LoggerConfig` parameters and can also load them from a JSON fil
   "daily_rotation": true
 }
 ```
+
+## Logging Usage
+
+Use level-specific methods directly from the logger instance:
+
+```cpp
+auto& logger = optimi::logger::Logger::instance();
+
+logger.info("Service started");
+logger.warn("Using fallback configuration");
+logger.error("Database connection failed");
+logger.fatal("Unrecoverable startup error");
+```
+
+These methods automatically capture source file, line, and function for each call site.
