@@ -25,3 +25,33 @@ target_link_libraries(optimi_logger
     PUBLIC
         nlohmann_json::nlohmann_json
 )
+
+enable_testing()
+
+add_executable(config_parser_tests
+    tests/config_parser_tests.cpp
+)
+
+target_link_libraries(config_parser_tests
+    PRIVATE
+        optimi_logger
+)
+
+add_test(
+    NAME config_parser_tests
+    COMMAND config_parser_tests
+)
+
+add_executable(logger_init_tests
+    tests/logger_init_tests.cpp
+)
+
+target_link_libraries(logger_init_tests
+    PRIVATE
+        optimi_logger
+)
+
+add_test(
+    NAME logger_init_tests
+    COMMAND logger_init_tests
+)
