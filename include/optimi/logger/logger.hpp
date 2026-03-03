@@ -195,6 +195,8 @@ private:
     Logger();
     ~Logger();
 
+    bool should_log_unlocked(LogLevel message_level) const;
+
     mutable std::mutex mutex_;
     LoggerConfig config_;
     std::string current_date_stamp_;
