@@ -62,6 +62,20 @@ logger.fatal("Unrecoverable startup error");
 
 These methods automatically capture source file, line, and function for each call site.
 
+## Example App
+
+A multithreaded example application is available at [examples/multi_thread_example.cpp](examples/multi_thread_example.cpp).
+
+Build and run:
+
+```bash
+cmake -S . -B build
+cmake --build build --target multi_thread_example
+./build/multi_thread_example
+```
+
+The example spawns multiple worker threads, writes logs concurrently, and verifies the expected line count.
+
 ## Third-Party Licenses
 
 External dependency license information is documented in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
