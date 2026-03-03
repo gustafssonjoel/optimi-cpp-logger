@@ -6,6 +6,7 @@
 #include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <streambuf>
 #include <sstream>
 #include <string>
 
@@ -236,6 +237,92 @@ bool test_macro_calls_write_expected_lines(const std::filesystem::path& temp_dir
     return pass;
 }
 
+bool test_different_file_and_console_levels(const std::filesystem::path& temp_dir) {
+    auto& logger = optimi::logger::Logger::instance();
+    logger.shutdown();
+
+    const auto log_file_path = temp_dir / "runtime" / "split_levels" / "split.log";
+
+    optimi::logger::LoggerConfig config{};
+    config.log_file_path = log_file_path.string();
+    config.min_level = optimi::logger::LogLevel::error;
+    config.console_min_level = optimi::logger::LogLevel::info;
+    config.auto_flush = true;
+    config.append = false;
+    config.daily_rotation = false;
+
+    if (!logger.init(config)) {
+        std::cerr << "FAILED: logger.init failed in split level test\n";
+        return false;
+    }
+
+    std::ostringstream captured_stdout;
+    std::ostringstream captured_stderr;
+    std::streambuf* original_stdout = std::cout.rdbuf(captured_stdout.rdbuf());
+    std::streambuf* original_stderr = std::cerr.rdbuf(captured_stderr.rdbuf());
+
+    logger.info("console only message");
+    logger.error("console and file message");
+
+    std::cout.rdbuf(original_stdout);
+    std::cerr.rdbuf(original_stderr);
+    logger.shutdown();
+
+    const std::string file_content = read_text_file(log_file_path);
+    const std::string stdout_content = captured_stdout.str();
+    const std::string stderr_content = captured_stderr.str();
+
+    bool pass = true;
+    pass &= expect_true(stdout_content.find("console only message") != std::string::npos, "console should include info message");
+    pass &= expect_true(stderr_content.find("console and file message") != std::string::npos, "stderr should include error message");
+
+    pass &= expect_true(file_content.find("console only message") == std::string::npos, "file should not include info below file level");
+    pass &= expect_true(file_content.find("console and file message") != std::string::npos, "file should include error at file level");
+    return pass;
+}
+
+bool test_off_levels_disable_file_and_console_output(const std::filesystem::path& temp_dir) {
+    auto& logger = optimi::logger::Logger::instance();
+    logger.shutdown();
+
+    const auto log_file_path = temp_dir / "runtime" / "off_levels" / "off.log";
+
+    optimi::logger::LoggerConfig config{};
+    config.log_file_path = log_file_path.string();
+    config.min_level = optimi::logger::LogLevel::off;
+    config.console_min_level = optimi::logger::LogLevel::off;
+    config.auto_flush = true;
+    config.append = false;
+    config.daily_rotation = false;
+
+    if (!logger.init(config)) {
+        std::cerr << "FAILED: logger.init failed in off-level test\n";
+        return false;
+    }
+
+    std::ostringstream captured_stdout;
+    std::ostringstream captured_stderr;
+    std::streambuf* original_stdout = std::cout.rdbuf(captured_stdout.rdbuf());
+    std::streambuf* original_stderr = std::cerr.rdbuf(captured_stderr.rdbuf());
+
+    logger.info("should not be logged");
+    logger.error("should also not be logged");
+
+    std::cout.rdbuf(original_stdout);
+    std::cerr.rdbuf(original_stderr);
+    logger.shutdown();
+
+    const std::string file_content = read_text_file(log_file_path);
+    const std::string stdout_content = captured_stdout.str();
+    const std::string stderr_content = captured_stderr.str();
+
+    bool pass = true;
+    pass &= expect_true(stdout_content.empty(), "stdout should be empty when console_min_level is off");
+    pass &= expect_true(stderr_content.empty(), "stderr should be empty when console_min_level is off");
+    pass &= expect_true(file_content.empty(), "file should contain no lines when min_level is off");
+    return pass;
+}
+
 } // namespace
 
 int main() {
@@ -255,6 +342,8 @@ int main() {
     all_passed &= test_init_from_json_invalid_field_type_fails(temp_dir);
     all_passed &= test_log_writes_formatted_line(temp_dir);
     all_passed &= test_macro_calls_write_expected_lines(temp_dir);
+    all_passed &= test_different_file_and_console_levels(temp_dir);
+    all_passed &= test_off_levels_disable_file_and_console_output(temp_dir);
 
     std::filesystem::remove_all(temp_dir, ec);
     return all_passed ? 0 : 1;
