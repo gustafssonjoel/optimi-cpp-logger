@@ -323,6 +323,77 @@ bool test_off_levels_disable_file_and_console_output(const std::filesystem::path
     return pass;
 }
 
+bool test_console_output_uses_level_colors_when_enabled(const std::filesystem::path& temp_dir) {
+    auto& logger = optimi::logger::Logger::instance();
+    logger.shutdown();
+
+    const auto log_file_path = temp_dir / "runtime" / "console_color" / "color.log";
+
+    optimi::logger::LoggerConfig config{};
+    config.log_file_path = log_file_path.string();
+    config.min_level = optimi::logger::LogLevel::off;
+    config.console_min_level = optimi::logger::LogLevel::info;
+    config.console_color = true;
+    config.auto_flush = true;
+    config.append = false;
+    config.daily_rotation = false;
+
+    if (!logger.init(config)) {
+        std::cerr << "FAILED: logger.init failed in console color test\n";
+        return false;
+    }
+
+    std::ostringstream captured_stdout;
+    std::streambuf* original_stdout = std::cout.rdbuf(captured_stdout.rdbuf());
+
+    logger.info("colored info");
+
+    std::cout.rdbuf(original_stdout);
+    logger.shutdown();
+
+    const std::string stdout_content = captured_stdout.str();
+    bool pass = true;
+    pass &= expect_true(stdout_content.find("\033[32m") != std::string::npos, "info console line should include green ANSI color");
+    pass &= expect_true(stdout_content.find("\033[0m") != std::string::npos, "console line should include ANSI reset code");
+    pass &= expect_true(stdout_content.find("colored info") != std::string::npos, "console line should include message text");
+    return pass;
+}
+
+bool test_console_output_has_no_colors_when_disabled(const std::filesystem::path& temp_dir) {
+    auto& logger = optimi::logger::Logger::instance();
+    logger.shutdown();
+
+    const auto log_file_path = temp_dir / "runtime" / "console_plain" / "plain.log";
+
+    optimi::logger::LoggerConfig config{};
+    config.log_file_path = log_file_path.string();
+    config.min_level = optimi::logger::LogLevel::off;
+    config.console_min_level = optimi::logger::LogLevel::info;
+    config.console_color = false;
+    config.auto_flush = true;
+    config.append = false;
+    config.daily_rotation = false;
+
+    if (!logger.init(config)) {
+        std::cerr << "FAILED: logger.init failed in console plain test\n";
+        return false;
+    }
+
+    std::ostringstream captured_stdout;
+    std::streambuf* original_stdout = std::cout.rdbuf(captured_stdout.rdbuf());
+
+    logger.info("plain info");
+
+    std::cout.rdbuf(original_stdout);
+    logger.shutdown();
+
+    const std::string stdout_content = captured_stdout.str();
+    bool pass = true;
+    pass &= expect_true(stdout_content.find("plain info") != std::string::npos, "console line should include plain message text");
+    pass &= expect_true(stdout_content.find("\033[") == std::string::npos, "console line should not contain ANSI color codes when disabled");
+    return pass;
+}
+
 } // namespace
 
 int main() {
@@ -344,6 +415,8 @@ int main() {
     all_passed &= test_macro_calls_write_expected_lines(temp_dir);
     all_passed &= test_different_file_and_console_levels(temp_dir);
     all_passed &= test_off_levels_disable_file_and_console_output(temp_dir);
+    all_passed &= test_console_output_uses_level_colors_when_enabled(temp_dir);
+    all_passed &= test_console_output_has_no_colors_when_disabled(temp_dir);
 
     std::filesystem::remove_all(temp_dir, ec);
     return all_passed ? 0 : 1;

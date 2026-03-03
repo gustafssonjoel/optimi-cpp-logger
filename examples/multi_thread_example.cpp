@@ -33,7 +33,8 @@ int main() {
 
     optimi::logger::LoggerConfig config{};
     config.log_file_path = log_file_path.string();
-    config.min_level = optimi::logger::LogLevel::info;
+    config.min_level = optimi::logger::LogLevel::trace;
+    config.console_min_level = optimi::logger::LogLevel::trace;
     config.auto_flush = true;
     config.append = false;
     config.daily_rotation = false;
@@ -53,9 +54,30 @@ int main() {
     for (int worker_index = 0; worker_index < worker_count; ++worker_index) {
         workers.emplace_back([worker_index]() {
             for (int message_index = 0; message_index < messages_per_worker; ++message_index) {
-                OPTIMI_LOG_INFO(
+                const std::string message =
                     "worker=" + std::to_string(worker_index) +
-                    " message=" + std::to_string(message_index));
+                    " message=" + std::to_string(message_index);
+
+                switch (message_index % 6) {
+                case 0:
+                    OPTIMI_LOG_TRACE(message);
+                    break;
+                case 1:
+                    OPTIMI_LOG_DEBUG(message);
+                    break;
+                case 2:
+                    OPTIMI_LOG_INFO(message);
+                    break;
+                case 3:
+                    OPTIMI_LOG_WARN(message);
+                    break;
+                case 4:
+                    OPTIMI_LOG_ERROR(message);
+                    break;
+                default:
+                    OPTIMI_LOG_FATAL(message);
+                    break;
+                }
             }
         });
     }

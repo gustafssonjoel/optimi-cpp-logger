@@ -31,6 +31,39 @@ std::string level_to_string(optimi::logger::LogLevel level) {
 	return "UNKNOWN";
 }
 
+const char* level_to_ansi_color(optimi::logger::LogLevel level) {
+	switch (level) {
+	case optimi::logger::LogLevel::trace:
+		return "\033[90m"; // bright black / gray
+	case optimi::logger::LogLevel::debug:
+		return "\033[36m"; // cyan
+	case optimi::logger::LogLevel::info:
+		return "\033[32m"; // green
+	case optimi::logger::LogLevel::warn:
+		return "\033[33m"; // yellow
+	case optimi::logger::LogLevel::error:
+		return "\033[31m"; // red
+	case optimi::logger::LogLevel::fatal:
+		return "\033[35m"; // magenta
+	case optimi::logger::LogLevel::off:
+		return "\033[0m";
+	}
+	return "\033[0m";
+}
+
+std::string colorize_console_line(const std::string& line_text, optimi::logger::LogLevel level) {
+	if (line_text.empty()) {
+		return line_text;
+	}
+
+	const char* color = level_to_ansi_color(level);
+	constexpr const char* reset = "\033[0m";
+	if (line_text.back() == '\n') {
+		return std::string(color) + line_text.substr(0, line_text.size() - 1) + reset + "\n";
+	}
+	return std::string(color) + line_text + reset;
+}
+
 std::tm current_local_time_tm() {
 	auto now = std::chrono::system_clock::now();
 	std::time_t now_time = std::chrono::system_clock::to_time_t(now);
@@ -252,7 +285,11 @@ void Logger::log(
 	if (should_log_to_console) {
 		std::ostream& console_stream =
 			(message_level >= LogLevel::error) ? static_cast<std::ostream&>(std::cerr) : static_cast<std::ostream&>(std::cout);
-		console_stream << line_text;
+		if (config_.console_color) {
+			console_stream << colorize_console_line(line_text, message_level);
+		} else {
+			console_stream << line_text;
+		}
 	}
 
 	if (config_.auto_flush) {
