@@ -142,6 +142,19 @@ bool should_log_against_level(optimi::logger::LogLevel message_level, optimi::lo
 	return message_level >= minimum_level && minimum_level != optimi::logger::LogLevel::off;
 }
 
+std::string short_source_file(const char* file) {
+	if (file == nullptr || *file == '\0') {
+		return "unknown";
+	}
+
+	const std::filesystem::path file_path(file);
+	const std::filesystem::path filename = file_path.filename();
+	if (filename.empty()) {
+		return std::string(file);
+	}
+	return filename.string();
+}
+
 } // namespace
 
 namespace optimi::logger {
@@ -266,7 +279,7 @@ void Logger::log(
 		}
 	}
 
-	const char* file_text = (file != nullptr) ? file : "unknown";
+	const std::string file_text = short_source_file(file);
 	const char* function_text = (function != nullptr) ? function : "unknown";
 	std::ostringstream line_builder;
 	line_builder
