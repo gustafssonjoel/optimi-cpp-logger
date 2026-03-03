@@ -105,6 +105,17 @@ bool load_config_from_json_file(
         }
     }
 
+    if (document.contains("console_min_level")) {
+        if (!document["console_min_level"].is_string()) {
+            error_message = "Invalid type for console_min_level: expected string.";
+            return false;
+        }
+        if (!parse_log_level(document["console_min_level"].get<std::string>(), parsed_config.console_min_level)) {
+            error_message = "Invalid console_min_level value.";
+            return false;
+        }
+    }
+
     if (document.contains("auto_flush")) {
         if (!document["auto_flush"].is_boolean()) {
             error_message = "Invalid type for auto_flush: expected boolean.";

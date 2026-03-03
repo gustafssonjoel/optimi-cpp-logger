@@ -35,8 +35,10 @@ enum class LogLevel {
 struct LoggerConfig {
     /** @brief Target log file path (base path used for rotation when enabled). */
     std::string log_file_path;
-    /** @brief Minimum severity level that will be written. */
+    /** @brief Minimum severity level that will be written to file. */
     LogLevel min_level = LogLevel::info;
+    /** @brief Minimum severity level that will be written to console when console output is enabled. */
+    LogLevel console_min_level = LogLevel::info;
     /** @brief Flush output stream after each write when true. */
     bool auto_flush = true;
     /** @brief Open file in append mode when true, otherwise truncate on init. */
