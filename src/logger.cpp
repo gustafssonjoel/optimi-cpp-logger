@@ -4,6 +4,7 @@
 #include <ctime>
 #include <filesystem>
 #include <iomanip>
+#include <iostream>
 #include <ios>
 #include <sstream>
 #include <thread>
@@ -28,6 +29,39 @@ std::string level_to_string(optimi::logger::LogLevel level) {
 		return "OFF";
 	}
 	return "UNKNOWN";
+}
+
+const char* level_to_ansi_color(optimi::logger::LogLevel level) {
+	switch (level) {
+	case optimi::logger::LogLevel::trace:
+		return "\033[90m"; // bright black / gray
+	case optimi::logger::LogLevel::debug:
+		return "\033[36m"; // cyan
+	case optimi::logger::LogLevel::info:
+		return "\033[32m"; // green
+	case optimi::logger::LogLevel::warn:
+		return "\033[33m"; // yellow
+	case optimi::logger::LogLevel::error:
+		return "\033[31m"; // red
+	case optimi::logger::LogLevel::fatal:
+		return "\033[35m"; // magenta
+	case optimi::logger::LogLevel::off:
+		return "\033[0m";
+	}
+	return "\033[0m";
+}
+
+std::string colorize_console_line(const std::string& line_text, optimi::logger::LogLevel level) {
+	if (line_text.empty()) {
+		return line_text;
+	}
+
+	const char* color = level_to_ansi_color(level);
+	constexpr const char* reset = "\033[0m";
+	if (line_text.back() == '\n') {
+		return std::string(color) + line_text.substr(0, line_text.size() - 1) + reset + "\n";
+	}
+	return std::string(color) + line_text + reset;
 }
 
 std::tm current_local_time_tm() {
@@ -102,6 +136,10 @@ bool open_log_stream(
 	}
 	stream = std::move(new_stream);
 	return true;
+}
+
+bool should_log_against_level(optimi::logger::LogLevel message_level, optimi::logger::LogLevel minimum_level) {
+	return message_level >= minimum_level && minimum_level != optimi::logger::LogLevel::off;
 }
 
 } // namespace
@@ -190,7 +228,7 @@ bool Logger::should_log(LogLevel message_level) const {
 }
 
 bool Logger::should_log_unlocked(LogLevel message_level) const {
-	return message_level >= config_.min_level && config_.min_level != LogLevel::off;
+	return should_log_against_level(message_level, config_.min_level);
 }
 
 void Logger::log(
@@ -204,11 +242,15 @@ void Logger::log(
 	if (!initialized_.load()) {
 		return;
 	}
-	if (!should_log_unlocked(message_level)) {
+
+	bool should_log_to_file = should_log_unlocked(message_level);
+	const bool should_log_to_console = should_log_against_level(message_level, config_.console_min_level);
+
+	if (!should_log_to_file && !should_log_to_console) {
 		return;
 	}
 
-	if (config_.daily_rotation) {
+	if (should_log_to_file && config_.daily_rotation) {
 		const std::string now_date = current_date_stamp();
 		if (now_date != current_date_stamp_) {
 			const std::filesystem::path rotated_path = build_log_file_path(
@@ -216,26 +258,48 @@ void Logger::log(
 				true,
 				now_date);
 			if (!open_log_stream(stream_, rotated_path, config_.append)) {
-				return;
+				should_log_to_file = false;
+			} else {
+				current_date_stamp_ = now_date;
+				active_log_path_ = rotated_path.string();
 			}
-			current_date_stamp_ = now_date;
-			active_log_path_ = rotated_path.string();
 		}
 	}
 
 	const char* file_text = (file != nullptr) ? file : "unknown";
 	const char* function_text = (function != nullptr) ? function : "unknown";
-
-	stream_
+	std::ostringstream line_builder;
+	line_builder
 		<< current_timestamp_with_millis()
 		<< " [" << level_to_string(message_level) << "]"
 		<< " [thread:" << std::this_thread::get_id() << "]"
 		<< " [" << file_text << ":" << line << " " << function_text << "] "
 		<< message
 		<< '\n';
+	const std::string line_text = line_builder.str();
+
+	if (should_log_to_file && stream_.is_open()) {
+		stream_ << line_text;
+	}
+
+	if (should_log_to_console) {
+		std::ostream& console_stream =
+			(message_level >= LogLevel::error) ? static_cast<std::ostream&>(std::cerr) : static_cast<std::ostream&>(std::cout);
+		if (config_.console_color) {
+			console_stream << colorize_console_line(line_text, message_level);
+		} else {
+			console_stream << line_text;
+		}
+	}
 
 	if (config_.auto_flush) {
-		stream_.flush();
+		if (stream_.is_open()) {
+			stream_.flush();
+		}
+		if (should_log_to_console) {
+			std::cout.flush();
+			std::cerr.flush();
+		}
 	}
 }
 

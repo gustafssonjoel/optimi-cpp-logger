@@ -1,6 +1,8 @@
 {
   "log_file_path": "./logs/app.log",
   "min_level": "info",
+  "console_min_level": "info",
+  "console_color": true,
   "auto_flush": true,
   "append": true,
   "daily_rotation": true

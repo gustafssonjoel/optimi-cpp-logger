@@ -105,6 +105,17 @@ bool load_config_from_json_file(
         }
     }
 
+    if (document.contains("console_min_level")) {
+        if (!document["console_min_level"].is_string()) {
+            error_message = "Invalid type for console_min_level: expected string.";
+            return false;
+        }
+        if (!parse_log_level(document["console_min_level"].get<std::string>(), parsed_config.console_min_level)) {
+            error_message = "Invalid console_min_level value.";
+            return false;
+        }
+    }
+
     if (document.contains("auto_flush")) {
         if (!document["auto_flush"].is_boolean()) {
             error_message = "Invalid type for auto_flush: expected boolean.";
@@ -127,6 +138,14 @@ bool load_config_from_json_file(
             return false;
         }
         parsed_config.daily_rotation = document["daily_rotation"].get<bool>();
+    }
+
+    if (document.contains("console_color")) {
+        if (!document["console_color"].is_boolean()) {
+            error_message = "Invalid type for console_color: expected boolean.";
+            return false;
+        }
+        parsed_config.console_color = document["console_color"].get<bool>();
     }
 
     if (parsed_config.log_file_path.empty()) {
