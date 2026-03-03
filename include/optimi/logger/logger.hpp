@@ -45,6 +45,8 @@ struct LoggerConfig {
     bool append = true;
     /** @brief Enable daily rotation using <base_name>_YYYYMMDD<extension>. */
     bool daily_rotation = true;
+    /** @brief Enable colored console output by log level. */
+    bool console_color = true;
     /** @brief Source JSON path metadata when config was loaded from JSON. */
     std::string config_json_path;
 };

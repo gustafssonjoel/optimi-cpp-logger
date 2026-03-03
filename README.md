@@ -22,6 +22,10 @@ The logger uses `LoggerConfig` parameters and can also load them from a JSON fil
 - Allowed values: `trace`, `debug`, `info`, `warn`, `error`, `fatal`, `off`.
 - This is independent from `min_level`, so file and console can use different thresholds.
 
+### `console_color` (boolean, optional, default: `true`)
+- `true`: apply colors by level on console output.
+- `false`: print plain, non-colored console output.
+
 ### `auto_flush` (boolean, optional, default: `true`)
 - `true`: flush each write immediately to disk (safer, slower).
 - `false`: keep writes buffered (faster, recent logs may be lost on abrupt crash).
@@ -47,6 +51,7 @@ The logger uses `LoggerConfig` parameters and can also load them from a JSON fil
   "log_file_path": "./logs/app.log",
   "min_level": "debug",
   "console_min_level": "warn",
+  "console_color": true,
   "auto_flush": true,
   "append": true,
   "daily_rotation": true

@@ -140,6 +140,14 @@ bool load_config_from_json_file(
         parsed_config.daily_rotation = document["daily_rotation"].get<bool>();
     }
 
+    if (document.contains("console_color")) {
+        if (!document["console_color"].is_boolean()) {
+            error_message = "Invalid type for console_color: expected boolean.";
+            return false;
+        }
+        parsed_config.console_color = document["console_color"].get<bool>();
+    }
+
     if (parsed_config.log_file_path.empty()) {
         error_message = "log_file_path must be non-empty.";
         return false;
