@@ -176,6 +176,7 @@ void Logger::set_level(LogLevel level) {
 }
 
 LogLevel Logger::level() const {
+	std::lock_guard<std::mutex> lock(mutex_);
 	return config_.min_level;
 }
 
@@ -184,6 +185,11 @@ bool Logger::is_initialized() const {
 }
 
 bool Logger::should_log(LogLevel message_level) const {
+	std::lock_guard<std::mutex> lock(mutex_);
+	return should_log_unlocked(message_level);
+}
+
+bool Logger::should_log_unlocked(LogLevel message_level) const {
 	return message_level >= config_.min_level && config_.min_level != LogLevel::off;
 }
 
@@ -198,7 +204,7 @@ void Logger::log(
 	if (!initialized_.load()) {
 		return;
 	}
-	if (!should_log(message_level)) {
+	if (!should_log_unlocked(message_level)) {
 		return;
 	}
 
