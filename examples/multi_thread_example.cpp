@@ -38,6 +38,7 @@ int main() {
     config.auto_flush = true;
     config.append = false;
     config.daily_rotation = false;
+    config.show_thread_id = true;
 
     if (!logger.init(config)) {
         std::cerr << "Failed to initialize logger for multi-thread example\n";
