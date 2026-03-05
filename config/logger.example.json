@@ -3,6 +3,7 @@
   "min_level": "info",
   "console_min_level": "info",
   "console_color": true,
+  "show_thread_id": true,
   "auto_flush": true,
   "append": true,
   "daily_rotation": true

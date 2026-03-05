@@ -47,6 +47,8 @@ struct LoggerConfig {
     bool daily_rotation = true;
     /** @brief Enable colored console output by log level. */
     bool console_color = true;
+    /** @brief Include thread id segment in formatted output when true. */
+    bool show_thread_id = true;
     /** @brief Source JSON path metadata when config was loaded from JSON. */
     std::string config_json_path;
 };

@@ -26,6 +26,10 @@ The logger uses `LoggerConfig` parameters and can also load them from a JSON fil
 - `true`: apply colors by level on console output.
 - `false`: print plain, non-colored console output.
 
+### `show_thread_id` (boolean, optional, default: `true`)
+- `true`: include `[thread:<id>]` in each formatted log line.
+- `false`: omit thread id from both file logs and console output.
+
 ### `auto_flush` (boolean, optional, default: `true`)
 - `true`: flush each write immediately to disk (safer, slower).
 - `false`: keep writes buffered (faster, recent logs may be lost on abrupt crash).
@@ -52,6 +56,7 @@ The logger uses `LoggerConfig` parameters and can also load them from a JSON fil
   "min_level": "debug",
   "console_min_level": "warn",
   "console_color": true,
+  "show_thread_id": true,
   "auto_flush": true,
   "append": true,
   "daily_rotation": true
