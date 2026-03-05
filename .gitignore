@@ -1,5 +1,6 @@
 # CMake directories
 /build/
+/build-asan/
 /cmake-build-*/
 
 # CMake generated
