@@ -33,11 +33,12 @@ bool test_valid_full_config(const std::filesystem::path& temp_dir) {
     const std::string json = R"({
   "log_file_path": "./logs/app.log",
   "min_level": "debug",
-    "console_min_level": "warn",
+  "console_min_level": "warn",
   "auto_flush": false,
   "append": false,
-        "daily_rotation": false,
-        "console_color": false
+  "daily_rotation": false,
+  "console_color": false,
+  "show_thread_id": false
 })";
 
     if (!write_text_file(config_path, json)) {
@@ -59,6 +60,7 @@ bool test_valid_full_config(const std::filesystem::path& temp_dir) {
     pass &= expect_true(config.append == false, "append should parse false");
     pass &= expect_true(config.daily_rotation == false, "daily_rotation should parse false");
     pass &= expect_true(config.console_color == false, "console_color should parse false");
+    pass &= expect_true(config.show_thread_id == false, "show_thread_id should parse false");
     pass &= expect_true(config.config_json_path == config_path.string(), "config_json_path should be set to input path");
     return pass;
 }
@@ -86,6 +88,7 @@ bool test_defaults_when_optional_missing(const std::filesystem::path& temp_dir) 
     pass &= expect_true(config.append == true, "default append should be true");
     pass &= expect_true(config.daily_rotation == true, "default daily_rotation should be true");
     pass &= expect_true(config.console_color == true, "default console_color should be true");
+    pass &= expect_true(config.show_thread_id == true, "default show_thread_id should be true");
     return pass;
 }
 
@@ -198,6 +201,28 @@ bool test_invalid_console_color_type_fails(const std::filesystem::path& temp_dir
     return pass;
 }
 
+bool test_invalid_show_thread_id_type_fails(const std::filesystem::path& temp_dir) {
+        const auto config_path = temp_dir / "invalid_show_thread_id_type.json";
+    const std::string json = R"({
+  "log_file_path": "./logs/app.log",
+    "show_thread_id": "yes"
+})";
+
+    if (!write_text_file(config_path, json)) {
+        std::cerr << "FAILED: could not write test file " << config_path << '\n';
+        return false;
+    }
+
+    optimi::logger::LoggerConfig config{};
+    std::string error;
+    const bool ok = optimi::logger::load_config_from_json_file(config_path.string(), config, error);
+
+    bool pass = true;
+    pass &= expect_false(ok, "invalid show_thread_id type should fail");
+    pass &= expect_true(error.find("Invalid type for show_thread_id") != std::string::npos, "error should mention show_thread_id type");
+    return pass;
+}
+
 bool test_off_levels_parse_successfully(const std::filesystem::path& temp_dir) {
     const auto config_path = temp_dir / "off_levels.json";
     const std::string json = R"({
@@ -262,6 +287,7 @@ int main() {
     all_passed &= test_invalid_type_fails(temp_dir);
     all_passed &= test_invalid_console_min_level_value_fails(temp_dir);
     all_passed &= test_invalid_console_color_type_fails(temp_dir);
+    all_passed &= test_invalid_show_thread_id_type_fails(temp_dir);
     all_passed &= test_off_levels_parse_successfully(temp_dir);
     all_passed &= test_parse_error_fails(temp_dir);
 

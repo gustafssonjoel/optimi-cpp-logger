@@ -148,6 +148,14 @@ bool load_config_from_json_file(
         parsed_config.console_color = document["console_color"].get<bool>();
     }
 
+    if (document.contains("show_thread_id")) {
+        if (!document["show_thread_id"].is_boolean()) {
+            error_message = "Invalid type for show_thread_id: expected boolean.";
+            return false;
+        }
+        parsed_config.show_thread_id = document["show_thread_id"].get<bool>();
+    }
+
     if (parsed_config.log_file_path.empty()) {
         error_message = "log_file_path must be non-empty.";
         return false;

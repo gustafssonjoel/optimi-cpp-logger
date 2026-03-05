@@ -284,8 +284,11 @@ void Logger::log(
 	std::ostringstream line_builder;
 	line_builder
 		<< current_timestamp_with_millis()
-		<< " [" << level_to_string(message_level) << "]"
-		<< " [thread:" << std::this_thread::get_id() << "]"
+		<< " [" << level_to_string(message_level) << "]";
+	if (config_.show_thread_id) {
+		line_builder << " [thread:" << std::this_thread::get_id() << "]";
+	}
+	line_builder
 		<< " [" << file_text << ":" << line << " " << function_text << "] "
 		<< message
 		<< '\n';

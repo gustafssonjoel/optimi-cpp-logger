@@ -394,6 +394,46 @@ bool test_console_output_has_no_colors_when_disabled(const std::filesystem::path
     return pass;
 }
 
+bool test_show_thread_id_false_omits_thread_segment_in_file_and_console(const std::filesystem::path& temp_dir) {
+    auto& logger = optimi::logger::Logger::instance();
+    logger.shutdown();
+
+    const auto log_file_path = temp_dir / "runtime" / "show_thread_id_false" / "hide.log";
+
+    optimi::logger::LoggerConfig config{};
+    config.log_file_path = log_file_path.string();
+    config.min_level = optimi::logger::LogLevel::info;
+    config.console_min_level = optimi::logger::LogLevel::info;
+    config.console_color = false;
+    config.auto_flush = true;
+    config.append = false;
+    config.daily_rotation = false;
+    config.show_thread_id = false;
+
+    if (!logger.init(config)) {
+        std::cerr << "FAILED: logger.init failed in show_thread_id test\n";
+        return false;
+    }
+
+    std::ostringstream captured_stdout;
+    std::streambuf* original_stdout = std::cout.rdbuf(captured_stdout.rdbuf());
+
+    logger.info("hidden thread id message");
+
+    std::cout.rdbuf(original_stdout);
+    logger.shutdown();
+
+    const std::string file_content = read_text_file(log_file_path);
+    const std::string stdout_content = captured_stdout.str();
+
+    bool pass = true;
+    pass &= expect_true(file_content.find("hidden thread id message") != std::string::npos, "file should include logged message");
+    pass &= expect_true(stdout_content.find("hidden thread id message") != std::string::npos, "console should include logged message");
+    pass &= expect_true(file_content.find("[thread:") == std::string::npos, "file line should omit thread id segment when show_thread_id is false");
+    pass &= expect_true(stdout_content.find("[thread:") == std::string::npos, "console line should omit thread id segment when show_thread_id is false");
+    return pass;
+}
+
 } // namespace
 
 int main() {
@@ -417,6 +457,7 @@ int main() {
     all_passed &= test_off_levels_disable_file_and_console_output(temp_dir);
     all_passed &= test_console_output_uses_level_colors_when_enabled(temp_dir);
     all_passed &= test_console_output_has_no_colors_when_disabled(temp_dir);
+    all_passed &= test_show_thread_id_false_omits_thread_segment_in_file_and_console(temp_dir);
 
     std::filesystem::remove_all(temp_dir, ec);
     return all_passed ? 0 : 1;
